@@ -1,0 +1,5 @@
+*** Using Microsoft NMAKE version 12.00.21005.1
+*** Using Microsoft Visual C++ version 120
+***
+=== COMPILING FOR 64-BIT
+=== DEBUGGING OFF
