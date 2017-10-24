@@ -26,6 +26,7 @@ PATCH_SIZE = [7, 5, 3];
 % Get image
 image_path = fullfile(INPUT_FOLDER, INPUT_IMAGE);
 in_image = im2double(imread(image_path));
+in_image = rgb2lab(in_image);
 
 % Get object mask
 [~,im_name,im_ext] = fileparts(image_path);
@@ -58,6 +59,7 @@ for patch_size_idx=1:length(PATCH_SIZE)
                 in_image(replace_pixel_ind(1):replace_pixel_ind(1)+patch_size-1,...
                 replace_pixel_ind(2):replace_pixel_ind(2)+patch_size-1,:);
         end
+        out_image = lab2rgb(out_image);
 
         %Get image saliency
         current_dir = cd; 
