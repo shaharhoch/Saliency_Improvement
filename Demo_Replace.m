@@ -17,7 +17,7 @@ MASK_FOLDER = '../Ad_Images/Masks/';
 OUTPUT_FOLDER = '../Ad_Images/Out/';
 
 %The ratio of pixels that would be replaced
-DECIMATION_RATIO = [0, 0.1, 0.2, 0.5, 0.7 0.99];
+DECIMATION_RATIO = [0, 0.1, 0.5, 0.7 0.9];
 % Make sure 1 is not in the decimination ratio, because you can't replace
 % all the pixels. 
 assert(~ismember(1, DECIMATION_RATIO))
@@ -53,11 +53,15 @@ for patch_size_idx=1:length(PATCH_SIZE)
             %Replace the patch
             orig_pixel_index = patchIndToPixelInd(replaced_patches_idx(ind), patch_size, out_image);
             replace_pixel_ind = patchIndToPixelInd(closest_patch_ind, patch_size, out_image);
+            
+            cur_patch = in_image(orig_pixel_index(1):orig_pixel_index(1)+patch_size-1,...
+                orig_pixel_index(2):orig_pixel_index(2)+patch_size-1,:);
+            replace_patch = in_image(replace_pixel_ind(1):replace_pixel_ind(1)+patch_size-1,...
+                replace_pixel_ind(2):replace_pixel_ind(2)+patch_size-1,:);
 
             out_image(orig_pixel_index(1):orig_pixel_index(1)+patch_size-1,...
                 orig_pixel_index(2):orig_pixel_index(2)+patch_size-1,:) = ...
-                in_image(replace_pixel_ind(1):replace_pixel_ind(1)+patch_size-1,...
-                replace_pixel_ind(2):replace_pixel_ind(2)+patch_size-1,:);
+                (cur_patch + replace_patch)/2;
         end
         out_image = lab2rgb(out_image);
 

@@ -21,5 +21,6 @@ function [ dist ] = getPatchDistance( patch1_ind, patch2_ind, image, patch_size 
         pixel_index2(2):pixel_index2(2)+patch_size-1,:);
     
     diff = patch1(:)-patch2(:);
-    dist = norm(diff);
+    %dist = norm(diff); % L2
+    dist = sum(abs(diff));
 end

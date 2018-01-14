@@ -8,6 +8,9 @@ figure, imshow(in_image);
 h = imfreehand; 
 object_mask = createMask(h);
 wait(h);
+
+se = strel('disk',3);
+object_mask = imclose(object_mask, se);
 imshow(object_mask);
 
 [~,im_name,ext] = fileparts(image_path);

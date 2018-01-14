@@ -40,11 +40,12 @@ object_mask = logical(imread(mask_path));
 
 shift_paths = cell(length(SHIFT_RATIOS));
 saliency_paths = cell(length(SHIFT_RATIOS));
+shifted_mask_paths = cell(length(SHIFT_RATIOS));
 for ind=1:length(SHIFT_RATIOS)
     shift_ratio = SHIFT_RATIOS(ind);
     
     %Shift the image
-    [shifted_im, new_image_bounds] = imageShift(in_image, object_mask, shift_ratio);
+    [shifted_im, new_image_bounds, shifted_mask] = imageShift(in_image, object_mask, shift_ratio);
     
     %%%%%%%%%%% Fill the image using interpolation %%%%%%%%%%%
     %Get wanted interpolation boarders
@@ -97,6 +98,12 @@ for ind=1:length(SHIFT_RATIOS)
     saliency_path = fullfile(OUTPUT_FOLDER, [saliency_name, '.jpg']);
     imwrite(saliency, saliency_path);
     saliency_paths{ind} = saliency_path;
+    
+    %Save the shifted mask
+    shifted_mask_name = sprintf('%s_Shifted_Mask_%.1f', im_name, shift_ratio, ext);
+    shifted_mask_path = fullfile(OUTPUT_FOLDER, [shifted_mask_name, '.jpg']);
+    imwrite(shifted_mask, shifted_mask_path);
+    shifted_mask_paths{ind} = shifted_mask_path;
 end
 
 % Plot the figure
@@ -105,6 +112,9 @@ for ind=1:length(shift_paths)
     shift_ratio = SHIFT_RATIOS(ind);
     image = imread(shift_paths{ind});
     saliency = imread(saliency_paths{ind});
+    shifted_mask = im2single(imread(shifted_mask_paths{ind}));
+    
+    saliency_score = getSaliencyScore(saliency, shifted_mask);
     
     hold on;
     subplot(2, length(SHIFT_RATIOS), ind);
@@ -115,6 +125,9 @@ for ind=1:length(shift_paths)
     subplot(2, length(SHIFT_RATIOS), ind+length(SHIFT_RATIOS));
     imshow(saliency)
     title('Saliency')
+    
+    saliency_score_label = sprintf('Saliency Score: %.2f', saliency_score);
+    xlabel(saliency_score_label)
 end
 
 %Save the figure
