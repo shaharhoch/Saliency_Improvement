@@ -5,6 +5,6 @@ for i=1:numel(object_mask)
         saliency_score = saliency_score + double(saliency(i));
     end 
 end
-saliency_score = saliency_score/sum(object_mask(:));
+saliency_score = saliency_score/sum(saliency(:));
 end
 
