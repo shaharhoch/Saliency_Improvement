@@ -20,14 +20,13 @@ INTERPOLATION_RANDOMNESS = 0;%9;
 INTERPOLATION_RATIO = 0;
 
 %Input/Output
-%INPUT_IMAGE = 'Car_Ad.jpg'; 
-INPUT_IMAGE = 'Perfume.jpg';
+INPUT_IMAGE = 'Car_Ad.jpg'; 
+%INPUT_IMAGE = 'Perfume.jpg';
 
 INPUT_FOLDER = '../Ad_Images/Images/';
 MASK_FOLDER = '../Ad_Images/Masks/';
-OUTPUT_FOLDER = '../Ad_Images/Out/';
-%SHIFT_RATIOS = [0,0.2,0.5,0.8,1]; 
-SHIFT_RATIOS = [0.8,1]; 
+OUTPUT_FOLDER = '../Ad_Images/Out_Local/';
+SHIFT_RATIOS = [0,0.2,0.5,0.8,1]; 
 
 % Get image
 image_path = fullfile(INPUT_FOLDER, INPUT_IMAGE);

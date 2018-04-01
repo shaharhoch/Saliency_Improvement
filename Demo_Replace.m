@@ -14,7 +14,7 @@ INPUT_IMAGE = 'Car_Ad.jpg';
 
 INPUT_FOLDER = '../Ad_Images/Images/';
 MASK_FOLDER = '../Ad_Images/Masks/';
-OUTPUT_FOLDER = '../Ad_Images/Out/';
+OUTPUT_FOLDER = '../Ad_Images/Out_Local/';
 
 %The ratio of pixels that would be replaced
 DECIMATION_RATIO = [0, 0.1, 0.5, 0.7 0.9];

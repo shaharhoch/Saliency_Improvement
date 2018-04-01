@@ -11,7 +11,7 @@ grad_weight = 0.1;
 im1 = im2double(im1);
 im1_mask = double(im1_mask);
 
-options.parallel_iter =30; %number of random search in Generalized PatchMatch (GPM)
+options.parallel_iter = 15; %number of random search in Generalized PatchMatch (GPM)
 options.patch_size = 10;%patchsize
 options.min_scale = 0.9;%minimum scale in GPM 
 options.max_scale = 1.2;%maximum scale in GPM 
@@ -19,7 +19,7 @@ options.min_relscale = 0.9;%minimum relative scale in GPM
 options.max_relscale = 1.1;%maximum relative scale in GPM 
 options.min_angle = -pi/4;%minimum rotation
 options.max_angle = pi/4;%maximum rotation
-options.search_reflection = 1;%indicates if the algorithm should search for reflection.  If you turn it on you need more parallel_iter!
+options.search_reflection = 0;%indicates if the algorithm should search for reflection.  If you turn it on you need more parallel_iter!
 options.window_size = 0;%Specifies the local search
 options.random_init = 1;%if it is turned to zero, GPM initializes the locations to be identity
 options.do_random_search = 1;%if it is turned to zero, algorithm just does random search
@@ -32,16 +32,16 @@ options.max_Gain = single([1.05  ; 1.05   ;   1.05;    1;1]);%maximum gain
 options.coh_weigh = 1;%if set to 1 the algorithm gives more weight to the coherent regions.
 options.normalize_weight = 0;%if set to 0 the algorithm ignores gain and bias adjustments
 options.num_threads = 12;%number of threads
-options.do_MinNNF = 6;%the algorithm does this number of random searches after merges previous NNF and current one.  Please refer to original PM for more details
+options.do_MinNNF = 3;%the algorithm does this number of random searches after merges previous NNF and current one.  Please refer to original PM for more details
 options.grad_weight = grad_weight;
-num_pyrs = 10;%number of scaled pyramids algorithm needs for synthesis
+num_pyrs = 5;%number of scaled pyramids algorithm needs for synthesis
 
 big_size =  [size(im1,1), size(im1,2)];
 
-start_scale = 35 / min(size(im1,1), size(im1,2));%the coasest scale is 35
+start_scale = 100 / min(size(im1,1), size(im1,2));%the coasest scale is 35
 
-num_scales = 10;%number of scales for EM iterations
-num_em = 30;%initial number of EM iterations at coarsest scale
+num_scales = 5;%number of scales for EM iterations
+num_em = 12;%initial number of EM iterations at coarsest scale
 decrease_factor = 3;%when we go to finer resolutions we reduce this number from number of EM iterations
 min_scale = 5;%the minimum number of EM iterations 
 
@@ -93,6 +93,6 @@ for k = 1 : num_scales
     
 end
 
-im_out = cur_im;
+im_out = lab2rgb(cur_im(:,:,1:3));
 end
 

@@ -59,7 +59,6 @@ if isfield(options, 'prev_map')
     options.prev_map = NNF_NN;
 end
 
-imwrite(lab2rgb(trg_im(:,:,1:3)), sprintf('%s\\Im%03d_Iter%03d.png',out_directory,(cur_scale), 0));
 alpha_fixed = alpha;
 alpha_fixed(alpha < 0.01) = 0;
 alpha_fixed(alpha > 0.99) = 1;
@@ -92,10 +91,7 @@ for k = 1 : num_em
         
         
         trg_im(:,:,1) = res;
-    end
-    
-    imwrite(lab2rgb(trg_im(:,:,1:3)), sprintf('%s\\Im%03d_Iter%03d.png',out_directory,(cur_scale), k));
-    
+    end    
     
     options.prev_map = cur_NNF;
 end

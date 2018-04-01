@@ -11,7 +11,7 @@ OBJECT_MASK__TH = 230;
 IMG_REPLACE__DECIMINATION_RATIO = 0.7; 
 IMG_REPLACE__PATCH_SIZE = 7;
 
-IMG_SHIFT__SHIFT_RATIO = 1;%0.2;
+IMG_SHIFT__SHIFT_RATIO = 0.3;%0.2;
 
 IMG_GAMMA__ALPHA = 0.1; 
 IMG_GAMMA__GAMMA_0 = 1.5; 
@@ -129,33 +129,37 @@ for ind=1:length(IN_IMAGES)
     close;
     
     % Get image after all
-    out_img_replace1 = out_img_replace;
-    out_img_gamma1 = image_gamma_correction_saliency(out_img_replace1, obj_mask,...
-        IMG_GAMMA__ALPHA, IMG_GAMMA__GAMMA_0, IMG_GAMMA__GAMMA_OBJ,...
-        IMG_GAMMA__FILTERED_SIZE);
-    [out_img_all, shifted_mask_all] = image_shift_saliency(out_img_gamma1,...
-        obj_mask, IMG_SHIFT__SHIFT_RATIO);
-    saliency_all = getSaliency(out_img_all);
-    saliency_score_all = getSaliencyScore(saliency_all, shifted_mask_all);
-    avg_saliency_all = avg_saliency_all + saliency_score_all;
-    
-    out_all_name = sprintf('%s_all.png', in_img_name);
-    out_all_path = fullfile(OUTPUT_FOLDER, out_all_name);
-    imwrite(out_img_all, out_all_path);
+%     out_img_replace1 = out_img_replace;
+%     out_img_gamma1 = image_gamma_correction_saliency(out_img_replace1, obj_mask,...
+%         IMG_GAMMA__ALPHA, IMG_GAMMA__GAMMA_0, IMG_GAMMA__GAMMA_OBJ,...
+%         IMG_GAMMA__FILTERED_SIZE);
+%     [out_img_all, shifted_mask_all] = image_shift_saliency(out_img_gamma1,...
+%         obj_mask, IMG_SHIFT__SHIFT_RATIO);
+%     saliency_all = getSaliency(out_img_all);
+%     saliency_score_all = getSaliencyScore(saliency_all, shifted_mask_all);
+%     avg_saliency_all = avg_saliency_all + saliency_score_all;
+%     
+%     out_all_name = sprintf('%s_all.png', in_img_name);
+%     out_all_path = fullfile(OUTPUT_FOLDER, out_all_name);
+%     imwrite(out_img_all, out_all_path);
 end
 
 avg_saliency_orig = avg_saliency_orig/length(IN_IMAGES);
 avg_saliency_replace = avg_saliency_replace/length(IN_IMAGES);
 avg_saliency_shift = avg_saliency_shift/length(IN_IMAGES);
 avg_saliency_gamma = avg_saliency_gamma/length(IN_IMAGES);
-avg_saliency_all = avg_saliency_all/length(IN_IMAGES);
+% avg_saliency_all = avg_saliency_all/length(IN_IMAGES);
 
 
 % Get results bar graph 
+% names = {'Original', 'Patch Replacement', 'Object Shift',...
+%     'Gamma Correction', 'All'};
+% results = [avg_saliency_orig avg_saliency_replace avg_saliency_shift...
+%     avg_saliency_gamma avg_saliency_all];
 names = {'Original', 'Patch Replacement', 'Object Shift',...
-    'Gamma Correction', 'All'};
+    'Gamma Correction'};
 results = [avg_saliency_orig avg_saliency_replace avg_saliency_shift...
-    avg_saliency_gamma avg_saliency_all];
+    avg_saliency_gamma];
 bar(results)
 set(gca,'xticklabel',names)
 title('Average Saliency Score')

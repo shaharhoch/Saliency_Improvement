@@ -7,12 +7,12 @@ addpath('..\Export_Fig');
 SALIENCY_ALGO_PATH = '../PCA_Saliency_CVPR2013';
 
 %Input/Output
-INPUT_IMAGE = 'Car_Ad.jpg'; 
-%INPUT_IMAGE = 'Perfume.jpg';
+%INPUT_IMAGE = 'Car_Ad.jpg'; 
+INPUT_IMAGE = 'Perfume.jpg';
 
 INPUT_FOLDER = '../Ad_Images/Images/';
 MASK_FOLDER = '../Ad_Images/Masks/';
-OUTPUT_FOLDER = '../Ad_Images/Out/';
+OUTPUT_FOLDER = '../Ad_Images/Out_Local/';
 
 % Get image
 image_path = fullfile(INPUT_FOLDER, INPUT_IMAGE);

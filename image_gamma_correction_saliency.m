@@ -29,6 +29,8 @@ gamma_mask = imfilter(gamma_mask, avg_filter, 'circular');
 
 %Correct the image
 out_image = gamma_correction_mask(in_img, gamma_mask);
+
+out_image = real(out_image);
 end
 
 function [ center_of_mass ] = findMaskCenterOfMass(image_mask)
