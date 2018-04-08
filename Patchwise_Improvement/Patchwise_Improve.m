@@ -1,6 +1,7 @@
-function [ out_im ] = Patchwise_Improve( in_img, in_mask )
+function [ out_im, saliency, saliency_orig, num_iter ] = Patchwise_Improve( in_img, in_mask )
 global options
 
+% Make sure image is double
 in_img = im2double(in_img);
 
 % Fix mask 
@@ -15,25 +16,55 @@ in_mask = imresize(in_mask,[size(in_img, 1), size(in_img, 2)]);
 % Get gradients
 in_lab = rgb2lab(in_img); 
 in_grad = cell(3,2);
-for i=1:3
-    [dx, dy] = sGradMex(single(in_lab(:,:,i))); 
-    in_grad{i, 1} = dx;
-    in_grad{i, 2} = dy; 
+for num_iter=1:3
+    [dx, dy] = sGradMex(single(in_lab(:,:,num_iter))); 
+    in_grad{num_iter, 1} = dx;
+    in_grad{num_iter, 2} = dy; 
 end
+
+% Get saliency 
+[saliency_orig, saliency_no_bias] = get_saliency_no_mid_bias(in_img); 
 
 out_im = in_img;
-for i=1:options.num_iter
-    out_im = Patchwise_Improve_Iteration(out_im, in_mask, in_lab, in_grad);
+out_im_lab = in_lab;
+saliency = saliency_orig;
+saliency_score_orig = getSaliencyScore(saliency_orig, in_mask);
+saliency_score = saliency_score_orig;
+for num_iter=1:options.max_num_iter
+    out_im_lab = Patchwise_Improve_Iteration(out_im_lab, in_mask, in_grad, saliency_no_bias);
+    
+    out_im_tmp = lab2rgb(out_im_lab);
+    [saliency_tmp, saliency_no_bias] = get_saliency_no_mid_bias(out_im_tmp);
+    saliency_score_tmp = getSaliencyScore(saliency_tmp, in_mask);
+    
+    % If saliency score decreased, ignore this iteration and stop. 
+    if(saliency_score_tmp < saliency_score)
+        fprintf('Patchwise improvement endedafter %d interations, becasue of saliency drop\n', num_iter)
+        return; 
+    end
+    
+    saliency = saliency_tmp;
+    saliency_score = saliency_score_tmp;
+    out_im = out_im_tmp;
+    % If we reached the desired saliency improvement, stop.
+    if((saliency_score - saliency_score_orig) >= options.req_sal_score_improvement)
+        fprintf('Patchwise improvement ended after %d interations, when reached desired goal. orig_score = %3f, cur_score=%3f',...
+            num_iter, saliency_score_orig, saliency_score);
+        return; 
+    end    
 end
+
+fprintf('Patchwise improvement ended after %d interations, when reached max iterations. orig_score = %3f, cur_score=%3f',...
+            num_iter, saliency_score_orig, saliency_score);
 
 end
 
-function [ out_im ] = Patchwise_Improve_Iteration( in_img, in_mask, in_lab, in_grad )
+function [ out_lab ] = Patchwise_Improve_Iteration( in_lab, in_mask, in_grad, saliency_no_bias )
 % Perform a patch-wise improvement of the saliency of the object marked by
 % the mask.
 global options
 
-[ max_sal_ind,  min_sal_ind ] = get_min_max_sal_ind(in_img, in_mask);
+[ max_sal_ind,  min_sal_ind ] = get_min_max_sal_ind(in_mask, saliency_no_bias);
 
 % Manipulate patcehs with the highest saliency in background
 out_lab = in_lab;
@@ -55,8 +86,6 @@ for i=1:3
         in_grad{i,1}, in_grad{i,2}, options.spe_grad_weight(i));
 end
 
-out_im = lab2rgb(out_lab);
-
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,23 +93,19 @@ end
 % max_sal_ind- Indexes of most salient pixels in the background. 
 % min_sal_ind- Indexes of least salient pixels in the object.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [ max_sal_ind,  min_sal_ind ] = get_min_max_sal_ind( in_img, in_mask )
+function [ max_sal_ind,  min_sal_ind ] = get_min_max_sal_ind( in_mask, saliency_no_bias )
 global options
 
-% Get saliency 
-saliency = get_saliency_no_mid_bias(in_img); 
-
-num_of_processed_patches = round((options.percentage_of_processed_pixels_in_interation*numel(saliency))/100);
 % Get indexes of lowest saliency pixels in the object
-num_of_processed_patches_in_object = round((options.percentage_of_processed_pixels_in_interation*sum(in_mask(:)))/100); 
-saliency_masked = double(saliency); 
+num_of_processed_patches_in_object = round((options.percentage_of_processed_pixels_in_interation_object*sum(in_mask(:)))/100); 
+saliency_masked = double(saliency_no_bias); 
 saliency_masked(in_mask ~= 1) = 300;
 [~, min_sal_ind] = sort(saliency_masked(:), 'ascend');
 min_sal_ind = min_sal_ind(1:num_of_processed_patches_in_object);
 
 % Get indexes of highest saliency pixels in the backgorund
-num_of_processed_patches_in_background = num_of_processed_patches - num_of_processed_patches_in_object;
-saliency_anti_masked = double(saliency); 
+num_of_processed_patches_in_background = round((options.percentage_of_processed_pixels_in_interation_background*(numel(in_mask)-sum(in_mask(:))))/100);
+saliency_anti_masked = double(saliency_no_bias); 
 saliency_anti_masked(in_mask == 1) = -1;
 [~, max_sal_ind] = sort(saliency_anti_masked(:), 'descend');
 max_sal_ind = max_sal_ind(1:num_of_processed_patches_in_background);
@@ -102,12 +127,27 @@ patches_mtx = im2patches(im_channel, patch_size);
 
 mean_patch = mean(patches_mtx,1);
 mean_mtx = repmat(mean_patch, [size(patches_mtx, 1), 1]);
-[coeff,score] = pca(patches_mtx - mean_mtx);
+[coeff,score,eig] = pca(patches_mtx - mean_mtx);
+
+% Get weights
+if(options.weighted_alpha == false)
+    dim = size(score,2);
+    weight = alpha * ones(1,dim);
+else
+    dim = pca_get_dim(eig, options.pca_dim_th_ration);
+    
+    dim_eig = eig(1:dim);
+    dim_eig = reshape(dim_eig, 1, length(dim_eig));
+    
+    % Normalize weight power average to 1
+    weight_power = (length(dim_eig)*dim_eig)/sum(dim_eig);
+    weight = (alpha * ones(1,dim)).^weight_power;
+end
 
 for i=1:length(patches_idx)
     ind = patches_idx(i); 
     
-    score(ind, :) = score(ind, :) * alpha;
+    score(ind, 1:dim) = score(ind, 1:dim) .* weight;
 end
 
 % Go from patches to a normal image
@@ -207,5 +247,24 @@ end
 function [row, col] = ind_to_col_row(ind, im_size)
 row = mod(ind-1, im_size(1))+1;
 col = ceil(ind/im_size(1));
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% pca_get_dim- Returns an approximation of the intrinsic dimentinon of the
+% PCA. (To what dim we should look at)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [dim] = pca_get_dim(pca_eig, th)
+pca_eig_norm = pca_eig/max(pca_eig);
+
+dim = 0; 
+for i=1:length(pca_eig)
+    if(pca_eig_norm(i) < th)
+        break;
+    end
+    
+    dim = dim + 1; 
+end
+assert(dim >= 1);
+
 end
 
